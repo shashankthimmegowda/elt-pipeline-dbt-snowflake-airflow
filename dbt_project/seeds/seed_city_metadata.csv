@@ -1,0 +1,15 @@
+city_name,country,region,population,timezone
+New York,US,North America,8336817,America/New_York
+Los Angeles,US,North America,3979576,America/Los_Angeles
+Chicago,US,North America,2693976,America/Chicago
+Houston,US,North America,2320268,America/Chicago
+London,GB,Europe,8982000,Europe/London
+Paris,FR,Europe,2161000,Europe/Paris
+Tokyo,JP,Asia,13960000,Asia/Tokyo
+Sydney,AU,Oceania,5312000,Australia/Sydney
+Toronto,CA,North America,2731571,America/Toronto
+Berlin,DE,Europe,3769000,Europe/Berlin
+Mumbai,IN,Asia,20411000,Asia/Kolkata
+Singapore,SG,Asia,5686000,Asia/Singapore
+Dubai,AE,Middle East,3331000,Asia/Dubai
+Seoul,KR,Asia,9776000,Asia/Seoul

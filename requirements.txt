@@ -1,0 +1,32 @@
+## Core
+python-dotenv==1.0.1
+pydantic==2.6.1
+pydantic-settings==2.1.0
+
+# Extraction
+httpx==0.27.0
+praw==7.7.1
+psycopg2-binary==2.9.9
+asyncio==3.4.3
+
+# Snowflake
+snowflake-connector-python==3.7.1
+snowflake-sqlalchemy==1.5.1
+
+# dbt
+dbt-core==1.7.8
+dbt-snowflake==1.7.3
+
+# Airflow (installed via Docker, listed for reference)
+# apache-airflow==2.7.3
+# apache-airflow-providers-snowflake==5.3.0
+
+# Testing
+pytest==8.0.0
+pytest-asyncio==0.23.4
+pytest-mock==3.12.0
+
+# Utilities
+tenacity==8.2.3
+structlog==24.1.0
+requests==2.31.0
