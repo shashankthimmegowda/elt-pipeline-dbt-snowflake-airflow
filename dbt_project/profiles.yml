@@ -1,0 +1,35 @@
+elt_pipeline:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'ELT_ROLE') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'ELT_DB') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'ELT_WH') }}"
+      schema: RAW
+      threads: 4
+
+    ci:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'ELT_ROLE') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'ELT_DB') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'ELT_WH') }}"
+      schema: CI_SCHEMA
+      threads: 4
+
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'ELT_ROLE') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'ELT_DB') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'ELT_WH') }}"
+      schema: ANALYTICS
+      threads: 8
