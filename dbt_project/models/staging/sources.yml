@@ -1,0 +1,61 @@
+version: 2
+
+sources:
+  - name: raw_reddit
+    database: "{{ env_var('SNOWFLAKE_DATABASE', 'ELT_DB') }}"
+    schema: RAW_REDDIT
+    description: "Raw Reddit data loaded from PRAW/httpx extraction"
+    freshness:
+      warn_after: {count: 26, period: hour}
+      error_after: {count: 50, period: hour}
+    loaded_at_field: loaded_at
+    tables:
+      - name: POSTS
+        description: "Raw Reddit posts as VARIANT JSON"
+        columns:
+          - name: raw_data
+            description: "JSON payload containing all post fields"
+          - name: loaded_at
+            description: "Timestamp when record was loaded into Snowflake"
+
+      - name: COMMENTS
+        description: "Raw Reddit comments as VARIANT JSON"
+        columns:
+          - name: raw_data
+            description: "JSON payload containing all comment fields"
+
+  - name: raw_weather
+    database: "{{ env_var('SNOWFLAKE_DATABASE', 'ELT_DB') }}"
+    schema: RAW_WEATHER
+    description: "Raw weather data from OpenWeather API"
+    freshness:
+      warn_after: {count: 3, period: hour}
+      error_after: {count: 6, period: hour}
+    loaded_at_field: loaded_at
+    tables:
+      - name: CURRENT_WEATHER
+        description: "Current weather observations"
+      - name: AIR_QUALITY
+        description: "Air quality index and pollutant measurements"
+
+  - name: raw_saas
+    database: "{{ env_var('SNOWFLAKE_DATABASE', 'ELT_DB') }}"
+    schema: RAW_SAAS
+    description: "Raw SaaS application database tables"
+    freshness:
+      warn_after: {count: 26, period: hour}
+      error_after: {count: 50, period: hour}
+    loaded_at_field: loaded_at
+    tables:
+      - name: USERS
+        description: "SaaS application users"
+      - name: ORDERS
+        description: "Customer orders"
+      - name: PRODUCTS
+        description: "Product catalog"
+      - name: ORDER_ITEMS
+        description: "Line items within orders"
+      - name: SUBSCRIPTIONS
+        description: "Customer subscriptions"
+      - name: EVENTS
+        description: "Application usage events"

@@ -1,0 +1,114 @@
+version: '3.8'
+
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY:-}
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__WEBSERVER__SECRET_KEY: 'your-secret-key-change-in-production'
+    # Snowflake
+    SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT}
+    SNOWFLAKE_USER: ${SNOWFLAKE_USER}
+    SNOWFLAKE_PASSWORD: ${SNOWFLAKE_PASSWORD}
+    SNOWFLAKE_WAREHOUSE: ${SNOWFLAKE_WAREHOUSE:-ELT_WH}
+    SNOWFLAKE_DATABASE: ${SNOWFLAKE_DATABASE:-ELT_DB}
+    SNOWFLAKE_ROLE: ${SNOWFLAKE_ROLE:-ELT_ROLE}
+    # APIs
+    REDDIT_CLIENT_ID: ${REDDIT_CLIENT_ID}
+    REDDIT_CLIENT_SECRET: ${REDDIT_CLIENT_SECRET}
+    REDDIT_USER_AGENT: ${REDDIT_USER_AGENT:-elt-pipeline/1.0}
+    OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY}
+    # SaaS DB
+    SAAS_DB_HOST: ${SAAS_DB_HOST:-saas-db}
+    SAAS_DB_PORT: ${SAAS_DB_PORT:-5432}
+    SAAS_DB_NAME: ${SAAS_DB_NAME:-saas_app}
+    SAAS_DB_USER: ${SAAS_DB_USER:-readonly_user}
+    SAAS_DB_PASSWORD: ${SAAS_DB_PASSWORD}
+    # Slack
+    SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./dbt_project:/opt/airflow/dbt_project
+    - ./extractors:/opt/airflow/extractors
+    - ./loaders:/opt/airflow/loaders
+    - ./config:/opt/airflow/config
+    - airflow-logs:/opt/airflow/logs
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  # Simulated SaaS source database
+  saas-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: readonly_user
+      POSTGRES_PASSWORD: readonly_pass
+      POSTGRES_DB: saas_app
+    volumes:
+      - saas-data:/var/lib/postgresql/data
+      - ./scripts/seed_saas_db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db init
+        airflow users create \
+          --username airflow \
+          --password airflow \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com || true
+    restart: "no"
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: airflow webserver --port 8080
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: airflow scheduler
+    healthcheck:
+      test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob --hostname $(hostname)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+volumes:
+  postgres-data:
+  saas-data:
+  airflow-logs:

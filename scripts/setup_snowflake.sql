@@ -1,0 +1,124 @@
+-- ============================================
+-- Snowflake Setup Script for ELT Pipeline
+-- Run this in your Snowflake worksheet or via snowsql
+-- ============================================
+
+-- 1. Create warehouse
+CREATE WAREHOUSE IF NOT EXISTS ELT_WH
+    WAREHOUSE_SIZE = 'X-SMALL'
+    AUTO_SUSPEND = 60
+    AUTO_RESUME = TRUE
+    MIN_CLUSTER_COUNT = 1
+    MAX_CLUSTER_COUNT = 1;
+
+-- 2. Create database
+CREATE DATABASE IF NOT EXISTS ELT_DB;
+USE DATABASE ELT_DB;
+
+-- 3. Create schemas
+CREATE SCHEMA IF NOT EXISTS RAW;              -- Landing zone for raw JSON
+CREATE SCHEMA IF NOT EXISTS RAW.RAW_REDDIT;   -- Reddit raw data
+CREATE SCHEMA IF NOT EXISTS RAW.RAW_WEATHER;  -- Weather raw data
+CREATE SCHEMA IF NOT EXISTS RAW.RAW_SAAS;     -- SaaS DB raw data
+CREATE SCHEMA IF NOT EXISTS STAGING;           -- dbt staging models
+CREATE SCHEMA IF NOT EXISTS INTERMEDIATE;      -- dbt intermediate (ephemeral)
+CREATE SCHEMA IF NOT EXISTS MARTS;             -- dbt mart tables
+CREATE SCHEMA IF NOT EXISTS SNAPSHOTS;         -- dbt snapshots (SCD Type 2)
+CREATE SCHEMA IF NOT EXISTS CI_SCHEMA;         -- CI/CD testing schema
+CREATE SCHEMA IF NOT EXISTS ANALYTICS;         -- Production analytics
+
+-- 4. Create role and grant permissions
+CREATE ROLE IF NOT EXISTS ELT_ROLE;
+
+GRANT USAGE ON WAREHOUSE ELT_WH TO ROLE ELT_ROLE;
+GRANT ALL ON DATABASE ELT_DB TO ROLE ELT_ROLE;
+GRANT ALL ON ALL SCHEMAS IN DATABASE ELT_DB TO ROLE ELT_ROLE;
+GRANT ALL ON FUTURE SCHEMAS IN DATABASE ELT_DB TO ROLE ELT_ROLE;
+GRANT ALL ON ALL TABLES IN DATABASE ELT_DB TO ROLE ELT_ROLE;
+GRANT ALL ON FUTURE TABLES IN DATABASE ELT_DB TO ROLE ELT_ROLE;
+
+-- 5. Create service user (optional — for Airflow)
+-- CREATE USER IF NOT EXISTS ELT_SERVICE_USER
+--     PASSWORD = 'CHANGE_ME'
+--     DEFAULT_ROLE = ELT_ROLE
+--     DEFAULT_WAREHOUSE = ELT_WH
+--     DEFAULT_NAMESPACE = ELT_DB.RAW;
+-- GRANT ROLE ELT_ROLE TO USER ELT_SERVICE_USER;
+
+-- 6. Create raw tables
+USE SCHEMA RAW;
+
+-- Reddit tables
+CREATE TABLE IF NOT EXISTS RAW_REDDIT.POSTS (
+    raw_data VARIANT,
+    loaded_at TIMESTAMP_TZ DEFAULT CURRENT_TIMESTAMP(),
+    source_file VARCHAR(500),
+    batch_id VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS RAW_REDDIT.COMMENTS (
+    raw_data VARIANT,
+    loaded_at TIMESTAMP_TZ DEFAULT CURRENT_TIMESTAMP(),
+    source_file VARCHAR(500),
+    batch_id VARCHAR(100)
+);
+
+-- Weather tables
+CREATE TABLE IF NOT EXISTS RAW_WEATHER.CURRENT_WEATHER (
+    raw_data VARIANT,
+    loaded_at TIMESTAMP_TZ DEFAULT CURRENT_TIMESTAMP(),
+    source_file VARCHAR(500),
+    batch_id VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS RAW_WEATHER.AIR_QUALITY (
+    raw_data VARIANT,
+    loaded_at TIMESTAMP_TZ DEFAULT CURRENT_TIMESTAMP(),
+    source_file VARCHAR(500),
+    batch_id VARCHAR(100)
+);
+
+-- SaaS tables
+CREATE TABLE IF NOT EXISTS RAW_SAAS.USERS (
+    raw_data VARIANT,
+    loaded_at TIMESTAMP_TZ DEFAULT CURRENT_TIMESTAMP(),
+    source_file VARCHAR(500),
+    batch_id VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS RAW_SAAS.ORDERS (
+    raw_data VARIANT,
+    loaded_at TIMESTAMP_TZ DEFAULT CURRENT_TIMESTAMP(),
+    source_file VARCHAR(500),
+    batch_id VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS RAW_SAAS.PRODUCTS (
+    raw_data VARIANT,
+    loaded_at TIMESTAMP_TZ DEFAULT CURRENT_TIMESTAMP(),
+    source_file VARCHAR(500),
+    batch_id VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS RAW_SAAS.ORDER_ITEMS (
+    raw_data VARIANT,
+    loaded_at TIMESTAMP_TZ DEFAULT CURRENT_TIMESTAMP(),
+    source_file VARCHAR(500),
+    batch_id VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS RAW_SAAS.SUBSCRIPTIONS (
+    raw_data VARIANT,
+    loaded_at TIMESTAMP_TZ DEFAULT CURRENT_TIMESTAMP(),
+    source_file VARCHAR(500),
+    batch_id VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS RAW_SAAS.EVENTS (
+    raw_data VARIANT,
+    loaded_at TIMESTAMP_TZ DEFAULT CURRENT_TIMESTAMP(),
+    source_file VARCHAR(500),
+    batch_id VARCHAR(100)
+);
+
+SELECT 'Snowflake setup complete!' AS status;

@@ -1,0 +1,109 @@
+version: 2
+
+models:
+  - name: stg_reddit_posts
+    description: "Cleaned Reddit posts — deduplicated by post_id"
+    columns:
+      - name: post_id
+        description: "Unique Reddit post identifier"
+        tests:
+          - unique
+          - not_null
+      - name: subreddit
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['dataengineering', 'datascience', 'python', 'machinelearning', 'analytics']
+      - name: score
+        tests:
+          - not_null
+      - name: created_at
+        tests:
+          - not_null
+
+  - name: stg_reddit_comments
+    description: "Cleaned Reddit comments — deduplicated by comment_id"
+    columns:
+      - name: comment_id
+        tests:
+          - unique
+          - not_null
+      - name: post_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_reddit_posts')
+              field: post_id
+
+  - name: stg_weather_current
+    description: "Hourly weather observations — deduplicated by city+hour"
+    columns:
+      - name: city_name
+        tests:
+          - not_null
+      - name: temperature_c
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -60
+              max_value: 60
+      - name: humidity_pct
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100
+
+  - name: stg_saas_users
+    description: "SaaS application users — deduplicated by user_id"
+    columns:
+      - name: user_id
+        tests:
+          - unique
+          - not_null
+      - name: email
+        tests:
+          - not_null
+          - unique
+      - name: plan_type
+        tests:
+          - accepted_values:
+              values: ['free', 'starter', 'pro', 'enterprise']
+
+  - name: stg_saas_orders
+    description: "SaaS orders — deduplicated by order_id"
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: user_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_saas_users')
+              field: user_id
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'refunded']
+      - name: total_amount
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+  - name: stg_saas_products
+    description: "Product catalog — deduplicated by product_id"
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+      - name: product_name
+        tests:
+          - not_null
+      - name: price
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
